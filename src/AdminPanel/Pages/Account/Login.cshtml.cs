@@ -21,10 +21,12 @@ public class LoginModel : PageModel
         var user = await _userService.Authenticate(username, password);
         if (user != null)
         {
-            await _signInManager.SignInAsync(user, true);
+            var identityUser = new IdentityUser { UserName = user.Username };
+            await _signInManager.SignInAsync(identityUser, isPersistent: false);
             return RedirectToPage("/Index");
         }
 
+        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         return Page();
     }
 }

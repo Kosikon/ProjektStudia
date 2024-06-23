@@ -1,5 +1,4 @@
-using Application.Interfaces;
-using Application.Services;
+using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,8 +11,6 @@ namespace Infrastructure
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseInMemoryDatabase("InMemoryDb"));
-
-            services.AddScoped<IUserService, UserService>();
 
             return services;
         }

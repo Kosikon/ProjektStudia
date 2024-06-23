@@ -38,7 +38,6 @@ namespace Application.Services
 
         public async Task<User> Create(User user, string password)
         {
-            // Validation
             if (string.IsNullOrWhiteSpace(password))
                 throw new ArgumentException("Password is required");
 

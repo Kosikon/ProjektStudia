@@ -11,6 +11,11 @@
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.2" />
+	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
+	</ItemGroup>
+
 	<!--<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 	</ItemGroup>-->

@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Domain.Entities;
+using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +23,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -27,11 +35,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("InMemoryDb"));
+
+// Add logging services
+builder.Services.AddLogging();
 
 var app = builder.Build();
 
@@ -43,11 +57,38 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1"));
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
+// Initialize the database with a default user
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<UserService>>();
+    AddTestUser(context, logger);
+}
+
 app.Run();
+
+void AddTestUser(ApplicationDbContext context, ILogger<UserService> logger)
+{
+    // Check if the user already exists
+    if (context.Users.Any(u => u.Username == "testuser"))
+    {
+        return;
+    }
+
+    // Create a new user
+    var userService = new UserService(context, new ConfigurationBuilder().Build(), logger);
+    var testUser = new User
+    {
+        Username = "testuser",
+        Role = "Admin"
+    };
+
+    userService.Create(testUser, "testpassword").Wait();
+}

@@ -1,10 +1,9 @@
 using Application.Interfaces;
 using Domain.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebAPI.Models;
+using Microsoft.Extensions.Logging;
 
 namespace WebAPI.Controllers
 {
@@ -13,20 +12,28 @@ namespace WebAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, ILogger<UsersController> logger)
         {
             _userService = userService;
+            _logger = logger;
         }
 
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
+            _logger.LogInformation("Authenticate request received for user: {Username}", model.Username);
+
             var user = await _userService.Authenticate(model.Username, model.Password);
 
             if (user == null)
+            {
+                _logger.LogWarning("Authentication failed for user: {Username}", model.Username);
                 return BadRequest(new { message = "Username or password is incorrect" });
+            }
 
+            _logger.LogInformation("User authenticated: {Username}", user.Username);
             return Ok(user);
         }
 

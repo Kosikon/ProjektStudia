@@ -57,7 +57,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1"));
 }
 
-// app.UseHttpsRedirection();
+// app.UseHttpsRedirection() -- zakomentowane, mialem problemy z certem SSL
 
 app.UseAuthentication();
 app.UseAuthorization();
